@@ -1,0 +1,15 @@
+server:
+  port: 8888
+  servlet:
+       context-path: /dev
+       
+spring.jpa.properties.hibernate.dialect : org.hibernate.dialect.PostgreSQLDialect
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/dev
+    username: postgres
+    password: 
+    initialization-mode: always
+    initialize: true
+    continue-on-error: true
+    spring.jpa.hibernate.ddl-auto : update
