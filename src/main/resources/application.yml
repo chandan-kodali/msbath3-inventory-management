@@ -1,5 +1,14 @@
 
 spring.profiles.active : dev
 
-
+spring:
+  postgres:
+  console:
+  enabled: true
   
+  application:
+    name: INVENTORY-MANEGEMENT
+  
+  
+    logging:
+        level.org.springframework.cloud.sleuth : DEBUG
