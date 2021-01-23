@@ -28,9 +28,7 @@ public class JwtRequestFilter extends OncePerRequestFilter{
 		String jwt = null;
 		String userName = null;
 		final String authorizationHeader = request.getHeader("Authorization");
-		System.out.println(authorizationHeader);
 		if(authorizationHeader!=null && authorizationHeader.startsWith("Bearer ")) {
-			System.out.println("inside if..");
 			jwt = authorizationHeader.substring(7);
 			userName = jwtUtil.extractUsername(jwt);
 		}

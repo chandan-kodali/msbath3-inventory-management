@@ -10,7 +10,10 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -44,47 +47,70 @@ public class ProductController {
 	private JwtUtil jwtUtil;
 	@Autowired
 	private AuthenticationManager authManager;
+	private static final Logger LOG = LoggerFactory.getLogger(ProductController.class);
 
 	// Get all the products in the system
 	@RequestMapping("/products")
-	private List<SlProduct> getAllProducts() {
-		return productService.getAllProducts();
+	public List<SlProduct> getAllProducts() {
+		LOG.info("Path:/products   RequestMethod:GET classMethod:getAllProducts --- entering");
+		List<SlProduct> products = productService.getAllProducts();
+		LOG.info("Path:/products   RequestMethod:GET classMethod:getAllProducts --- exiting");
+
+		return products;
 	}
 
 	// create multiple products in a single request
 	@RequestMapping(method = RequestMethod.POST, value = "/products")
-	private String createProducts(@RequestBody List<SlProduct> products) {
-		return productService.createProducts(products);
+	public String createProducts(@RequestBody List<SlProduct> products) {
+		LOG.info("Path:/products   RequestMethod:POST classMethod:createProducts --- entering");
+		String msg = productService.createProducts(products);
+		LOG.info("Path:/products   RequestMethod:POST classMethod:createProducts --- exiting");
+		return msg;
 	}
 
 	// Get a product details for the given id
 	@RequestMapping("/products/{id}")
-	private SlProduct getAProduct(@PathVariable int id) {
-		return productService.getAProduct(id);
+	public SlProduct getAProduct(@PathVariable int id) {
+		LOG.info("Path:/products/" + id + "   RequestMethod:GET classMethod:getAProduct --- entering");
+		SlProduct product = productService.getAProduct(id);
+		LOG.info("Path:/products/" + id + "   RequestMethod:GET classMethod:getAProduct --- exiting");
+		return product;
 	}
 
 	// create a new product
 	@RequestMapping(method = RequestMethod.POST, value = "/products/{id}")
-	private String getAProduct(@RequestBody SlProduct product) {
-		return productService.createAProduct(product);
+	public String createAProduct(@RequestBody SlProduct product) {
+		LOG.info("Path:/products/{id}   RequestMethod:POST classMethod:createAProduct --- entering");
+		String msg = productService.createAProduct(product);
+		LOG.info("Path:/products/{id}   RequestMethod:POST classMethod:createAProduct --- exiting");
+		return msg;
 	}
 
 	// Update the product with the given details
 	@RequestMapping(method = RequestMethod.PUT, value = "/products/{id}")
-	private String updateProduct(@RequestBody SlProduct product) {
-		 productService.createAProduct(product);
-	return "Product updated successfully";
+	public String updateProduct(@RequestBody SlProduct product) {
+		LOG.info("Path:/products/{id}   RequestMethod:PUT classMethod:updateProduct --- entering");
+		productService.createAProduct(product);
+		LOG.info("Path:/products/{id}   RequestMethod:PUT classMethod:updateProduct --- exiting");
+
+		return "Product updated successfully";
 	}
 
 	// Delete the product for the given id
 	@RequestMapping(method = RequestMethod.DELETE, value = "/products/{id}")
-	private String deleteProduct(@PathVariable int id) {
-		return productService.deleteAProduct(id);
+	public String deleteProduct(@PathVariable int id) {
+		LOG.info("Path:/products/{id}   RequestMethod:DELETE classMethod:deleteProduct --- entering");
+		String msg = productService.deleteAProduct(id);
+
+		LOG.info("Path:/products/{id}   RequestMethod:DELETE classMethod:deleteProduct --- exiting");
+		return msg;
 	}
 
-	// Delete the product for the given id
 	@RequestMapping("/supportedproducts")
-	private List<Product> getUniqueProducts() {
+	@Cacheable("supportedproducts")
+	public List<Product> getUniqueProducts() throws InterruptedException {
+		LOG.info("Path:/supportedproducts   RequestMethod:GET classMethod:getUniqueProducts --- entering");
+		Thread.sleep(1000 * 3);
 		List<SlProduct> listProducts = new ArrayList<>();
 		listProducts = productService.getAllProducts();
 		List<Product> lstProd = new ArrayList<Product>();
@@ -96,10 +122,12 @@ public class ProductController {
 			p.setProduct_name(product.getName());
 			lstProd.add(p);
 		});
+		LOG.info("Path:/supportedproducts   RequestMethod:GET classMethod:getUniqueProducts --- exiting");
+
 		return lstProd;
 	}
 
-	private static <T> Predicate<T> distinctByKeys(Function<? super T, ?>... keyExtractors) {
+	public static <T> Predicate<T> distinctByKeys(Function<? super T, ?>... keyExtractors) {
 		final Map<List<?>, Boolean> seen = new ConcurrentHashMap<>();
 
 		return t -> {
@@ -112,24 +140,32 @@ public class ProductController {
 	@RequestMapping(method = RequestMethod.POST, value = "/authenticate")
 	public ResponseEntity<?> createAuthenticationToken(@RequestBody AuthenticationRequest authRequest)
 			throws Exception {
+		LOG.info("Path:/authenticate   RequestMethod:POST classMethod:createAuthenticationToken --- entering");
+
 		try {
 
 			authManager.authenticate(
 					new UsernamePasswordAuthenticationToken(authRequest.getUserName(), authRequest.getPassword()));
 		} catch (BadCredentialsException e) {
+			LOG.error("Path:/authenticate   RequestMethod:POST classMethod:createAuthenticationToken --- error:"
+					+ e.getMessage());
 			throw new Exception("Bad user/password", e);
 		}
 		final UserDetails userDetails = userDetailsService.loadUserByUsername(authRequest.getUserName());
 		final String jwt = jwtUtil.generateToken(userDetails);
 		ResponseEntity<?> reponse = ResponseEntity.ok(new AuthenticationResponse(jwt));
+		LOG.info("Path:/authenticate   RequestMethod:POST classMethod:createAuthenticationToken --- exiting");
+
 		return reponse;
 	}
 
 	@RequestMapping(method = RequestMethod.POST, value = "/file")
 	public String handleFileUpload(@RequestParam("file") MultipartFile file)
 			throws JsonParseException, JsonMappingException, IOException {
-		System.out.println("file::" + file);
+		LOG.info("Path:/file   RequestMethod:POST classMethod:handleFileUpload --- entering");
 		productService.uploadFile(file);
+		LOG.info("Path:/file   RequestMethod:POST classMethod:handleFileUpload --- entering");
+
 		return "Successfully created the products with the file details";
 	}
 }
