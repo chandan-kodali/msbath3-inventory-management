@@ -2,10 +2,6 @@
 spring.profiles.active : prod
 
 spring:
-  postgres:
-  console:
-  enabled: true
-  
   application:
     name: INVENTORY-MANEGEMENT
   
